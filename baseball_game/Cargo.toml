@@ -1,0 +1,7 @@
+[package]
+name = "baseball_game"
+version = "0.1.0"
+authors = ["Gyeongwook Choi <gyeongwook.choi@linecorp.com>"]
+
+[dependencies]
+rand = "0.3.8"
