@@ -3,16 +3,17 @@ use std::io::Write;
 
 extern crate rand;
 
-static NUMBER_COUNT: u32 = 3;
+const INPUT_NUMBER_COUNT: u32 = 3;
+const TURN_LIMIT: u32 = 9;
 
-struct Result {
+struct TurnScore {
 	strike: u32,
 	ball: u32,
 }
 
-enum ValidationResult {
-	Accept([u32; 3]),
-	Reject,
+enum TurnResult {
+	Cont(u32, u32),
+	Retry(&'static str),
 }
 
 fn generate_answer() -> [u32; 3] {
@@ -32,35 +33,62 @@ fn generate_answer() -> [u32; 3] {
 	answer
 }
 
-fn convert_input(input: String) -> ValidationResult {
+fn convert_input(input: String) -> Result<Vec<u32>, &'static str> {
 	let input_numbers: Vec<&str> = input.trim().split(' ').collect();
 
 	let element_count = input_numbers.len();
-	if element_count == 3 {	
-		let mut retun_val = [0; 3];
+	if element_count == INPUT_NUMBER_COUNT as usize {	
+		let mut retun_val:Vec<u32> = Vec::new();
 
-		for (idx, each_number_str) in input_numbers.iter().enumerate() {
+		for each_number_str in input_numbers {
 			let each_number = u32::from_str_radix(each_number_str, 10);
 
 			// each input number validation
-			let input_num = match each_number {
-				Ok(num) => num,
-				Err(_) => { return ValidationResult::Reject; }
+			match each_number {
+				Ok(num) => { retun_val.push(num); },
+				Err(_) => { return Err("invalid number format"); },
 			};
-
-			retun_val[idx] = input_num;
 		}
 
-		return ValidationResult::Accept(retun_val);
+		Ok(retun_val)
+	} else {
+		Err("invalid input number")
+	}
+}
+
+fn progress_turn(answer: [u32; 3]) -> TurnResult {
+	let mut input: String = String::new();
+	io::stdin().read_line(&mut input);
+
+	// input format validation
+	let input_numbers = match convert_input(input) {
+		Ok(numbers) => numbers,
+		Err(message) => {
+			return TurnResult::Retry(message);
+		}
+	};
+
+	let mut current_score = TurnScore{strike:0, ball:0};
+
+	// compare with answer
+	for (idx, each_number) in input_numbers.iter().enumerate() {
+		for (answer_idx, each_answer) in answer.iter().enumerate() {
+			if *each_number == *each_answer {
+				if idx == answer_idx {
+					current_score.strike += 1;
+				} else {
+					current_score.ball += 1;
+				}
+			}
+		}
 	}
 
-	ValidationResult::Reject
+	TurnResult::Cont(current_score.strike, current_score.ball)
 }
 
 fn main() {
 	io::stdout().flush();
-	
-	let turn_limit = 9;
+
 	let mut turn = 1;
 
 	let answer = generate_answer();
@@ -68,45 +96,30 @@ fn main() {
 	println!("[DEBUG] answer : {:?}", answer);
 	println!(">>> Game started...");
 
-	'main_turn: loop {	
-		if turn > turn_limit {
+	loop {
+		if turn > TURN_LIMIT {
 			println!("game over...");
 			return;
 		}
 
-		let mut input: String = String::new();
 		println!("[turn : {}] Input your answer", turn);
-		io::stdin().read_line(&mut input);
 
-		// input format validation
-		let input_numbers = match convert_input(input) {
-			ValidationResult::Accept(numbers) => numbers,
-			ValidationResult::Reject => {
+		let (strike, ball) = match progress_turn(answer) {
+			TurnResult::Cont(s, b) => (s, b),
+			TurnResult::Retry(message) => {
+				println!("{}", message);
+
 				println!("check your input format");
 				println!("input format : number number number");
 				println!("example : 1 2 3");
 
-				continue 'main_turn;
-			}
+				continue;
+			},
 		};
-		let mut current_result = Result{strike:0, ball:0};
 
-		// compare with answer
-		for (idx, each_number) in input_numbers.iter().enumerate() {
-			for (answer_idx, each_answer) in answer.iter().enumerate() {
-				if *each_number == *each_answer {
-					if idx == answer_idx {
-						current_result.strike += 1;
-					} else {
-						current_result.ball += 1;
-					}
-				}
-			}
-		}
+		println!("[turn : {}] strike : {}, ball : {}\n", turn, strike, ball);
 
-		println!("[turn : {}] strike : {}, ball : {}\n", turn, current_result.strike, current_result.ball);
-
-		if current_result.strike == 3 {
+		if strike == INPUT_NUMBER_COUNT {
 			println!("clear!");
 			println!("your score : {} turn", turn);
 			return;
