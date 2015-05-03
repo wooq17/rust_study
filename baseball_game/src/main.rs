@@ -3,30 +3,23 @@ use std::io::Write;
 
 extern crate rand;
 
-const INPUT_NUMBER_COUNT: u32 = 3;
+const INPUT_NUMBER_COUNT: usize = 3;
 const TURN_LIMIT: u32 = 9;
-
-struct TurnScore {
-	strike: u32,
-	ball: u32,
-}
 
 enum TurnResult {
 	Cont(u32, u32),
 	Retry(&'static str),
 }
 
-fn generate_answer() -> [u32; 3] {
-	let mut answer = [0; 3];
-	for each_idx in 0..3 {
-		'select_random_number: loop {
-			let rand_number = rand::random::<u32>() % 9 + 1;
-			for each in &answer {
-				if rand_number == *each { continue 'select_random_number; }
-			}
+fn generate_answer() -> Vec<u32> {
+	let mut answer: Vec<u32> = Vec::new();
 
-			answer[each_idx] = rand_number;
-			break;
+	while answer.len() < INPUT_NUMBER_COUNT {
+		let rand_number = rand::random::<u32>() % 9 + 1;
+
+		match answer.iter().find(|x| **x == rand_number) {
+			Some(_) => {},
+			None => answer.push(rand_number),
 		}
 	}
 
@@ -36,15 +29,12 @@ fn generate_answer() -> [u32; 3] {
 fn convert_input(input: String) -> Result<Vec<u32>, &'static str> {
 	let input_numbers: Vec<&str> = input.trim().split(' ').collect();
 
-	let element_count = input_numbers.len();
-	if element_count == INPUT_NUMBER_COUNT as usize {	
+	if input_numbers.len() == INPUT_NUMBER_COUNT {	
 		let mut retun_val:Vec<u32> = Vec::new();
 
 		for each_number_str in input_numbers {
-			let each_number = u32::from_str_radix(each_number_str, 10);
-
 			// each input number validation
-			match each_number {
+			match u32::from_str_radix(each_number_str, 10) {
 				Ok(num) => { retun_val.push(num); },
 				Err(_) => { return Err("invalid number format"); },
 			};
@@ -56,7 +46,7 @@ fn convert_input(input: String) -> Result<Vec<u32>, &'static str> {
 	}
 }
 
-fn progress_turn(answer: [u32; 3]) -> TurnResult {
+fn progress_turn(answer: &Vec<u32>) -> TurnResult {
 	let mut input: String = String::new();
 	io::stdin().read_line(&mut input);
 
@@ -68,22 +58,21 @@ fn progress_turn(answer: [u32; 3]) -> TurnResult {
 		}
 	};
 
-	let mut current_score = TurnScore{strike:0, ball:0};
+	let mut strike = 0;
+	let mut ball = 0;
 
 	// compare with answer
 	for (idx, each_number) in input_numbers.iter().enumerate() {
-		for (answer_idx, each_answer) in answer.iter().enumerate() {
-			if *each_number == *each_answer {
-				if idx == answer_idx {
-					current_score.strike += 1;
-				} else {
-					current_score.ball += 1;
-				}
-			}
+		match answer.iter().find(|x| **x == *each_number) {
+			Some(_) => {
+				if answer[idx] == *each_number { strike += 1; }
+				else { ball += 1; }
+			},
+			None => {},
 		}
 	}
 
-	TurnResult::Cont(current_score.strike, current_score.ball)
+	TurnResult::Cont(strike, ball)
 }
 
 fn main() {
@@ -104,7 +93,7 @@ fn main() {
 
 		println!("[turn : {}] Input your answer", turn);
 
-		let (strike, ball) = match progress_turn(answer) {
+		let (strike, ball) = match progress_turn(&answer) {
 			TurnResult::Cont(s, b) => (s, b),
 			TurnResult::Retry(message) => {
 				println!("{}", message);
@@ -119,7 +108,7 @@ fn main() {
 
 		println!("[turn : {}] strike : {}, ball : {}\n", turn, strike, ball);
 
-		if strike == INPUT_NUMBER_COUNT {
+		if strike == INPUT_NUMBER_COUNT as u32 {
 			println!("clear!");
 			println!("your score : {} turn", turn);
 			return;
