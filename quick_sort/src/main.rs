@@ -1,9 +1,21 @@
 trait Sortable {
 	fn quick_sort(&mut self);
+
+	fn partition(&mut self) -> usize;
 }
 
 impl Sortable for [i32] {
 	fn quick_sort(&mut self) {
+		let length = self.len();
+		if length < 2 { return; }
+
+		let pivot_idx = self.partition();
+
+		self[0..pivot_idx].quick_sort();
+		self[pivot_idx+1..length].quick_sort();
+	}
+
+	fn partition(&mut self) -> usize {
 		let pivot_idx = self.len() - 1;
 		let pivot_value = self[pivot_idx];
 		let mut post_part_start_idx = 0;
@@ -18,16 +30,7 @@ impl Sortable for [i32] {
 			post_part_start_idx += 1;
 		}
 
-		
-		if post_part_start_idx > 1 {
-			let mut prev_part = &mut self[0..post_part_start_idx-1];
-			prev_part.quick_sort();
-		}
-		
-		if  pivot_idx > 0 && post_part_start_idx < pivot_idx {
-			let mut post_part = &mut self[post_part_start_idx..pivot_idx+1];
-			post_part.quick_sort();
-		}
+		post_part_start_idx-1
 	}
 }
 
@@ -36,6 +39,7 @@ fn main() {
     let mut test_vector = [4, 6, 9, 3, -1, -5, 7, 3, 6, -1, 2];
     println!("before : {:?}", test_vector);
 
+    // test_vector.sort();
     test_vector.quick_sort();
 
     println!("after  : {:?}", test_vector);
