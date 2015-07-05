@@ -27,7 +27,7 @@ impl<T> PriorityQueue<T> where T: Ord + Default + Clone {
 
 	pub fn pop(&mut self) {
 		if self.size > 0 {
-			self.elements[1] = self.elements[self.size].clone();
+			self.elements.swap(1, self.size);
 			self.size -= 1;
 			self.heapify(1);
 		}
