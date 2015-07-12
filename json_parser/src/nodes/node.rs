@@ -1,6 +1,6 @@
 use std::cell::RefCell;
-use std::rc::{Rc, Weak};
-use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
+use std::ops::Deref;
 use std::collections::HashMap;
 
 pub enum NodeEnum {
