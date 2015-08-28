@@ -108,6 +108,8 @@ fn main() {
         // make header
         let mut header = Header{ length:0, message_tag:MESSAGE_TAG_CHAT, group_id:0, sender_id: 0 };
         header.length = user_input.len();
+
+        println!("len : {}", header.length);
         
         let message_bytes = user_input.into_bytes();
         let header_bytes = bincode::encode(&header, bincode::SizeLimit::Infinite).unwrap();

@@ -202,13 +202,12 @@ fn main() {
     
     println!("Start to listen, ready to accept");
 
-    let mut sample_chat_group = ChatGroup::new();
+    let sample_chat_group = ChatGroup::new();
     let _tx = sample_chat_group.get_transmitter().unwrap();
 
     thread::spawn(move|| {
         handle_chat_group(sample_chat_group);
     });
-
 
     // accept connections and process them, spawning a new thread for each one
     for stream in listener.incoming() {
